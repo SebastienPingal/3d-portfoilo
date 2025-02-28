@@ -1,11 +1,13 @@
 'use client'
 import { Experience } from "@/components/Experience";
+import { UI } from "@/components/UI";
 import { Loader } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useEffect, useState } from "react";
 
 export default function Home() {
   const [cameraPosition, setCameraPosition] = useState<[number, number, number]>([-0.5, 1, 9]);
+  const [currentPage, setCurrentPage] = useState(0);
   
   useEffect(() => {
     // Only access window after component has mounted (client-side)
@@ -14,6 +16,7 @@ export default function Home() {
 
   return (
     <div className="h-full">
+      <UI currentPage={currentPage} setCurrentPage={setCurrentPage} />
       <Loader />
       <Canvas shadows camera={{
           position: cameraPosition,
@@ -21,7 +24,7 @@ export default function Home() {
         }}>
         <group position-y={0}>
           <Suspense fallback={null}>
-            <Experience />
+            <Experience currentPage={currentPage} />
           </Suspense>
         </group>
       </Canvas>
