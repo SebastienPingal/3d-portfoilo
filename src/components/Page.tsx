@@ -10,15 +10,15 @@ import { MathUtils } from "three"
 const easingFactor = 0.5 // if quicker, adjust turningPageTime
 const easingFactorFold = 0.3
 const turningPageTime = 400 // if quicker, adjust easingFactor
-const insideCurveStrength = 0.18
+const insideCurveStrength = 0.15
 const outsideCurveStrength = 0.05
 const turningCurveStrength = 0.09
 
-const PAGE_WIDTH = 1.28
-const PAGE_HEIGHT = 1.71
-const PAGE_DEPTH = 0.014
-const PAGE_SEGMENTS = 30
-const SEGMENT_WIDTH = PAGE_WIDTH / PAGE_SEGMENTS
+export const PAGE_WIDTH = 1.28
+export const PAGE_HEIGHT = 1.71
+export const PAGE_DEPTH = 0.014
+export const PAGE_SEGMENTS = 30
+export const SEGMENT_WIDTH = PAGE_WIDTH / PAGE_SEGMENTS
 
 const pageGeometry = new BoxGeometry(
   PAGE_WIDTH,
@@ -224,7 +224,8 @@ export const Page = ({ page, number, currentPage, opened, bookClosed, setCurrent
       <primitive
         object={manualSkinnedMesh}
         position-z={-number * PAGE_DEPTH}
-        ref={skinnedMesh} />
+        ref={skinnedMesh}
+      />
     </group>
   )
 } 
