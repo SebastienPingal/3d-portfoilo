@@ -5,6 +5,8 @@ import { Loader } from "@react-three/drei"
 import { Canvas } from "@react-three/fiber"
 import { Suspense, useEffect, useState } from "react"
 import { Page } from "@/types/pages"
+import CssPixelation from "@/components/CSSPixelation"
+
 export default function Home() {
   const [cameraPosition, setCameraPosition] = useState<[number, number, number]>([-0.5, 1, 9])
   const [currentPage, setCurrentPage] = useState(0)
@@ -74,16 +76,18 @@ export default function Home() {
     <div className="h-full">
       <UI pages={pages} currentPage={currentPage} setCurrentPage={setCurrentPage} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10" />
       <Loader />
-      <Canvas shadows camera={{
-        position: cameraPosition,
-        fov: 45,
-      }}>
-        <group position-y={0}>
-          <Suspense fallback={null}>
-            <Experience currentPage={currentPage} pages={pages} setCurrentPage={setCurrentPage} />
-          </Suspense>
-        </group>
-      </Canvas>
+      <CssPixelation>
+        <Canvas shadows camera={{
+          position: cameraPosition,
+          fov: 45,
+        }}>
+          <group position-y={0}>
+            <Suspense fallback={null}>
+              <Experience currentPage={currentPage} pages={pages} setCurrentPage={setCurrentPage} />
+            </Suspense>
+          </group>
+        </Canvas>
+      </CssPixelation>
     </div>
   )
 }

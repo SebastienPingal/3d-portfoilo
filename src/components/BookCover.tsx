@@ -8,9 +8,12 @@ import { easing } from "maath"
 import { PAGE_WIDTH, PAGE_HEIGHT, PAGE_DEPTH } from "./Page"
 import { Page as PageType } from "@/types/pages"
 import { degToRad } from "three/src/math/MathUtils.js"
+
 export const COVER_WIDTH = PAGE_WIDTH + PAGE_WIDTH * 0.05
 export const COVER_HEIGHT = PAGE_HEIGHT + PAGE_HEIGHT * 0.05
 export const COVER_DEPTH = 0.05
+
+const easingFactor = 0.3
 
 const bookCoverGeometry = new BoxGeometry(
   COVER_WIDTH,
@@ -60,27 +63,27 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, ...prop
     let targetPosition: [number, number, number] = [baseX, baseY, baseZ]
 
     if (isBack && !lastPage) {
-      targetRotation = Math.PI / 2
+      targetRotation = degToRad(90)
     }
     if (isBack && !bookClosed) {
       targetPosition = [baseX + COVER_DEPTH / 2 + PAGE_DEPTH * (pages.length), baseY, baseZ - COVER_DEPTH / 2 - PAGE_DEPTH * (pages.length)]
     }
     if (lastPage) {
-      targetRotation = -Math.PI / 2
+      targetRotation = degToRad(-85)
     }
 
     easing.dampAngle(
       group.current.rotation,
       "y",
       targetRotation,
-      0.5,
+      easingFactor,
       delta
     )
 
     easing.damp3(
       group.current.position,
       targetPosition,
-      0.5,
+      0.3,
       delta
     )
   })

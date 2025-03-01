@@ -10,7 +10,7 @@ import { MathUtils } from "three"
 const easingFactor = 0.5 // if quicker, adjust turningPageTime
 const easingFactorFold = 0.3
 const turningPageTime = 400 // if quicker, adjust easingFactor
-const insideCurveStrength = 0.15
+const insideCurveStrength = 0.16
 const outsideCurveStrength = 0.05
 const turningCurveStrength = 0.09
 
@@ -66,7 +66,7 @@ const pageMaterials = [
   new MeshStandardMaterial({ color: "white" }),
 ]
 
-export const Page = ({ page, number, currentPage, opened, bookClosed, setCurrentPage, ...props }: { page: PageType, number: number, currentPage: number, opened: boolean, bookClosed: boolean, setCurrentPage: (page: number) => void } & ThreeElements['group']) => {
+export const Page = ({ page, number, opened, bookClosed, setCurrentPage, ...props }: { page: PageType, number: number, opened: boolean, bookClosed: boolean, setCurrentPage: (page: number) => void } & ThreeElements['group']) => {
   const texturePaths = [
     page.contentFront.image,
     page.contentBack.image,
@@ -143,8 +143,7 @@ export const Page = ({ page, number, currentPage, opened, bookClosed, setCurrent
     let turningTime = Math.min(turningPageTime, +new Date() - turnedAt.current) / turningPageTime;
     turningTime = Math.sin(turningTime * Math.PI);
 
-
-    let targetRotation = opened ? -Math.PI / 2 : Math.PI / 2
+    let targetRotation = opened ? degToRad(-87) : degToRad(90)
     if (!bookClosed) {
       targetRotation += degToRad(number * 0.9)
     }
