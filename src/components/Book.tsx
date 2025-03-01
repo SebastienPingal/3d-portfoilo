@@ -43,6 +43,8 @@ export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: Pa
         position-x={COVER_DEPTH / 2}
         position-z={COVER_DEPTH / 2}
         pages={pages}
+        setTargetPage={setTargetPage}
+        targetPage={targetPage}
       />
       {pages.map((page, index) => (
         <Page
@@ -61,6 +63,8 @@ export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: Pa
         position-x={-PAGE_DEPTH * (pages.length - 1) - COVER_DEPTH / 2}
         position-z={COVER_DEPTH / 2}
         pages={pages}
+        setTargetPage={setTargetPage}
+        targetPage={targetPage}
       />
     </group>
   )

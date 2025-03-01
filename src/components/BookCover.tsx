@@ -2,16 +2,19 @@
 
 import { ThreeElements } from "@react-three/fiber"
 import { useFrame } from "@react-three/fiber"
-import { useRef, useMemo, useEffect } from "react"
-import { Group, MeshStandardMaterial, BoxGeometry } from "three"
+import { useRef, useMemo, useEffect, useState } from "react"
+import { Group, MeshStandardMaterial, BoxGeometry, Color } from "three"
 import { easing } from "maath"
 import { PAGE_WIDTH, PAGE_HEIGHT, PAGE_DEPTH } from "./Page"
 import { Page as PageType } from "@/types/pages"
-import { degToRad } from "three/src/math/MathUtils.js"
+import { degToRad, MathUtils } from "three/src/math/MathUtils.js"
+import { useCursor } from "@react-three/drei"
 
 export const COVER_WIDTH = PAGE_WIDTH + PAGE_WIDTH * 0.05
 export const COVER_HEIGHT = PAGE_HEIGHT + PAGE_HEIGHT * 0.05
 export const COVER_DEPTH = 0.05
+
+const emissiveColor = new Color("blue")
 
 const easingFactor = 0.3
 
@@ -29,17 +32,24 @@ const bookCoverMaterial = new MeshStandardMaterial({
   metalness: 0.1
 })
 
-export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, ...props }: {
+export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTargetPage, targetPage, ...props }: {
   isBack?: boolean
   lastPage: boolean
   bookClosed: boolean
   pages: PageType[]
+  setTargetPage: (page: number) => void
+  targetPage: number
 } & ThreeElements['group']) => {
   const group = useRef<Group>(null)
 
   const material = useMemo(() => {
-    const material = bookCoverMaterial.clone()
-    return material
+    return new MeshStandardMaterial({
+      color: '#8B4513',
+      roughness: 0.7,
+      metalness: 0.1,
+      emissive: emissiveColor,
+      emissiveIntensity: 0
+    })
   }, [])
 
   // Use useRef to store initial position and initialize in useEffect
@@ -57,6 +67,10 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, ...prop
 
   useFrame((_, delta) => {
     if (!group.current) return
+
+    const emissiveIntensity = highlighted ? 0.5 : 0
+    material.emissiveIntensity = MathUtils.lerp(material.emissiveIntensity, emissiveIntensity, 0.1)
+
 
     let targetRotation = !bookClosed ? degToRad(-85) : degToRad(90)
     const [baseX, baseY, baseZ] = initialPosition.current
@@ -88,8 +102,31 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, ...prop
     )
   })
 
+  const [highlighted, setHighlighted] = useState(false)
+  useCursor(highlighted)
+
   return (
-    <group ref={group} {...props}>
+    <group ref={group} {...props}
+      onPointerEnter={(e) => {
+        e.stopPropagation()
+        setHighlighted(true)
+      }}
+      onPointerLeave={() => {
+        setHighlighted(false)
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        if (isBack) {
+          const newPage = targetPage === pages.length + 1 
+            ? pages.length + 2 
+            : pages.length + 1
+          setTargetPage(newPage)
+        } else {
+          const newPage = targetPage === 1 ? 0 : 1
+          setTargetPage(newPage)
+        }
+      }}
+    >
       <mesh
         geometry={bookCoverGeometry}
         material={material}
