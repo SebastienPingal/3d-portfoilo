@@ -3,7 +3,7 @@
 import { ThreeElements } from "@react-three/fiber"
 import { useFrame } from "@react-three/fiber"
 import { useRef, useMemo, useEffect, useState } from "react"
-import { Group, MeshStandardMaterial, BoxGeometry, Color } from "three"
+import { MeshStandardMaterial, BoxGeometry, Color, Mesh } from "three"
 import { easing } from "maath"
 import { PAGE_WIDTH, PAGE_HEIGHT, PAGE_DEPTH } from "./Page"
 import { Page as PageType } from "@/types/pages"
@@ -27,9 +27,11 @@ const bookCoverGeometry = new BoxGeometry(
 bookCoverGeometry.translate(COVER_WIDTH / 2, 0, 0)
 
 const bookCoverMaterial = new MeshStandardMaterial({
-  color: '#8B4513',  // Saddle brown color
+  color: '#8B4513',
   roughness: 0.7,
-  metalness: 0.1
+  metalness: 0.1,
+  emissive: emissiveColor,
+  emissiveIntensity: 0
 })
 
 export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTargetPage, targetPage, ...props }: {
@@ -40,37 +42,39 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTarg
   setTargetPage: (page: number) => void
   targetPage: number
 } & ThreeElements['group']) => {
-  const group = useRef<Group>(null)
+  const mesh = useRef<Mesh>(null)
 
-  const material = useMemo(() => {
-    return new MeshStandardMaterial({
-      color: '#8B4513',
-      roughness: 0.7,
-      metalness: 0.1,
-      emissive: emissiveColor,
-      emissiveIntensity: 0
-    })
+  const manualMesh = useMemo(() => {
+    const material = bookCoverMaterial.clone()
+    const thisMesh = new Mesh(bookCoverGeometry, material)
+    thisMesh.castShadow = true
+    thisMesh.receiveShadow = true
+    return thisMesh
   }, [])
 
   // Use useRef to store initial position and initialize in useEffect
   const initialPosition = useRef<[number, number, number]>([0, 0, 0])
 
   useEffect(() => {
-    if (group.current) {
+    if (mesh.current) {
       initialPosition.current = [
-        group.current.position.x,
-        group.current.position.y,
-        group.current.position.z
+        mesh.current.position.x,
+        mesh.current.position.y,
+        mesh.current.position.z
       ]
     }
   }, [])
 
   useFrame((_, delta) => {
-    if (!group.current) return
+    if (!mesh.current) return
 
     const emissiveIntensity = highlighted ? 0.5 : 0
-    material.emissiveIntensity = MathUtils.lerp(material.emissiveIntensity, emissiveIntensity, 0.1)
-
+    const material = mesh.current.material as MeshStandardMaterial
+    material.emissiveIntensity = MathUtils.lerp(
+      material.emissiveIntensity,
+      emissiveIntensity,
+      0.1
+    )
 
     let targetRotation = !bookClosed ? degToRad(-85) : degToRad(90)
     const [baseX, baseY, baseZ] = initialPosition.current
@@ -87,7 +91,7 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTarg
     }
 
     easing.dampAngle(
-      group.current.rotation,
+      mesh.current.rotation,
       "y",
       targetRotation,
       easingFactor,
@@ -95,7 +99,7 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTarg
     )
 
     easing.damp3(
-      group.current.position,
+      mesh.current.position,
       targetPosition,
       0.3,
       delta
@@ -106,7 +110,7 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTarg
   useCursor(highlighted)
 
   return (
-    <group ref={group} {...props}
+    <group {...props}
       onPointerEnter={(e) => {
         e.stopPropagation()
         setHighlighted(true)
@@ -117,8 +121,8 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTarg
       onClick={(e) => {
         e.stopPropagation()
         if (isBack) {
-          const newPage = targetPage === pages.length + 1 
-            ? pages.length + 2 
+          const newPage = targetPage === pages.length + 1
+            ? pages.length + 2
             : pages.length + 1
           setTargetPage(newPage)
         } else {
@@ -127,11 +131,9 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTarg
         }
       }}
     >
-      <mesh
-        geometry={bookCoverGeometry}
-        material={material}
-        castShadow
-        receiveShadow
+      <primitive
+        ref={mesh}
+        object={manualMesh}
       />
     </group>
   )
