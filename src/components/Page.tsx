@@ -16,7 +16,7 @@ const turningCurveStrength = 0.09
 
 const PAGE_WIDTH = 1.28
 const PAGE_HEIGHT = 1.71
-const PAGE_DEPTH = 0.003
+const PAGE_DEPTH = 0.014
 const PAGE_SEGMENTS = 30
 const SEGMENT_WIDTH = PAGE_WIDTH / PAGE_SEGMENTS
 
@@ -223,7 +223,7 @@ export const Page = ({ page, number, currentPage, opened, bookClosed, setCurrent
     >
       <primitive
         object={manualSkinnedMesh}
-        position-z={-number * PAGE_DEPTH + currentPage * PAGE_DEPTH * 10}
+        position-z={-number * PAGE_DEPTH}
         ref={skinnedMesh} />
     </group>
   )
