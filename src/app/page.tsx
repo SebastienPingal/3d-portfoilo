@@ -9,7 +9,7 @@ import CssPixelation from "@/components/CSSPixelation"
 
 export default function Home() {
   const [cameraPosition, setCameraPosition] = useState<[number, number, number]>([-0.5, 1, 9])
-  const [currentPage, setCurrentPage] = useState(0)
+  const [targetPage, setTargetPage] = useState(0)
 
   const pages: Page[] = [
     {
@@ -74,7 +74,7 @@ export default function Home() {
 
   return (
     <div className="h-full">
-      <UI pages={pages} currentPage={currentPage} setCurrentPage={setCurrentPage} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10" />
+      <UI pages={pages} targetPage={targetPage} setTargetPage={setTargetPage} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10" />
       <Loader />
       <CssPixelation>
         <Canvas shadows camera={{
@@ -83,7 +83,7 @@ export default function Home() {
         }}>
           <group position-y={0}>
             <Suspense fallback={null}>
-              <Experience currentPage={currentPage} pages={pages} setCurrentPage={setCurrentPage} />
+              <Experience targetPage={targetPage} pages={pages} setTargetPage={setTargetPage} />
             </Suspense>
           </group>
         </Canvas>

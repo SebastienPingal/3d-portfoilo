@@ -66,7 +66,7 @@ const pageMaterials = [
   new MeshStandardMaterial({ color: "white" }),
 ]
 
-export const Page = ({ page, number, opened, bookClosed, setCurrentPage, ...props }: { page: PageType, number: number, opened: boolean, bookClosed: boolean, setCurrentPage: (page: number) => void } & ThreeElements['group']) => {
+export const Page = ({ page, number, opened, bookClosed, setTargetPage, ...props }: { page: PageType, number: number, opened: boolean, bookClosed: boolean, setTargetPage: (page: number) => void } & ThreeElements['group']) => {
   const texturePaths = [
     page.contentFront.image,
     page.contentBack.image,
@@ -216,7 +216,7 @@ export const Page = ({ page, number, opened, bookClosed, setCurrentPage, ...prop
       }}
       onClick={(e) => {
         e.stopPropagation()
-        setCurrentPage(opened ? number : number + 1)
+        setTargetPage(opened ? number : number + 1)
         setHighlighted(false)
       }}
     >

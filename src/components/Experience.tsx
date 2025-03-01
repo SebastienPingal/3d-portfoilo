@@ -3,12 +3,12 @@ import { Environment, Float, OrbitControls } from "@react-three/drei";
 import { Book } from "./Book";
 import { Page } from "@/types/pages";
 
-export const Experience = ({ currentPage, pages, setCurrentPage }: { currentPage: number, pages: Page[], setCurrentPage: (page: number) => void }) => {
+export const Experience = ({ targetPage, pages, setTargetPage }: { targetPage: number, pages: Page[], setTargetPage: (page: number) => void }) => {
   return (
     <>
       <Float
       >
-        <Book pages={pages} currentPage={currentPage} setCurrentPage={setCurrentPage} rotation-y={-Math.PI / 2} />
+        <Book pages={pages} targetPage={targetPage} setTargetPage={setTargetPage} rotation-y={-Math.PI / 2} />
       </Float>
       <OrbitControls />
       <Environment preset="studio"></Environment>
