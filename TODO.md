@@ -1,5 +1,6 @@
 - [ ] gérer la colision des page avec les couvertures
 - [ ] gérer la 4eme de couverture qui ne se place pas bien une fois le livre fermé  derniere page
+- [ ] gerer le click sur les couvertures
 - [ ] aroundire les angles des couvertures
 - [ ] gerer couvertures images
 - [ ] gere pages avec texte

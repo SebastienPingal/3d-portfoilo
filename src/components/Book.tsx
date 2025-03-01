@@ -5,43 +5,40 @@ import { Page, PAGE_DEPTH } from "./Page"
 import { useEffect, useState } from "react"
 import { BookCover, COVER_DEPTH } from "./BookCover"
 
-export const Book = ({ pages, currentPage, setCurrentPage, ...props }: { pages: PageType[], currentPage: number, setCurrentPage: (page: number) => void } & ThreeElements['group']) => {
-  const [delayedPage, setDelayedPage] = useState(currentPage)
+export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: PageType[], targetPage: number, setTargetPage: (page: number) => void } & ThreeElements['group']) => {
+  const [delayedPage, setDelayedPage] = useState(targetPage)
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout
-    const goToPage = () => {
-      setDelayedPage((delayedPage: number) => {
-        if (currentPage === delayedPage) {
-          return delayedPage
-        } else {
-          timeout = setTimeout(() => {
-            goToPage()
-          },
-            Math.abs(currentPage - delayedPage) > 2 ? 50 : 150
-          )
-          if (currentPage > delayedPage) {
-            return delayedPage + 1
-          }
-          if (currentPage < delayedPage) {
-            return delayedPage - 1
-          }
-          return delayedPage
-        }
-      })
-    }
-    goToPage()
+    // If we're already at the target, nothing to do
+    if (targetPage === delayedPage) return
+    
+    // Calculate next page
+    const nextPage = targetPage > delayedPage ? delayedPage + 1 : delayedPage - 1
+    
+    // Special check for cover closing movements
+    const isClosingCover =
+      (nextPage === 0 && delayedPage === 1) ||
+      (nextPage === pages.length + 2 && delayedPage === pages.length + 1)
+    
+    const delay = isClosingCover ? 500 : 150
+    
+    // Schedule the state update after the appropriate delay
+    const timeout = setTimeout(() => {
+      setDelayedPage(nextPage)
+    }, delay)
+    
     return () => {
       clearTimeout(timeout)
     }
-  }, [currentPage])
+  }, [targetPage, delayedPage, pages.length])
 
-  const bookClosed = delayedPage === 0 || delayedPage === pages.length
+  const bookClosed = delayedPage === 0 || delayedPage === pages.length + 2
+  const lastPage = delayedPage === pages.length + 2
 
   return (
     <group {...props}>
       <BookCover
-        lastPage={delayedPage === pages.length}
+        lastPage={lastPage}
         bookClosed={bookClosed}
         position-x={COVER_DEPTH / 2}
         position-z={COVER_DEPTH / 2}
@@ -51,16 +48,15 @@ export const Book = ({ pages, currentPage, setCurrentPage, ...props }: { pages: 
         <Page
           key={index}
           page={page}
-          currentPage={delayedPage}
-          opened={delayedPage > index}
-          number={index}
+          opened={delayedPage > index + 1}
+          number={index + 1}
           bookClosed={bookClosed}
-          setCurrentPage={setCurrentPage}
+          setTargetPage={setTargetPage}
         />
       ))}
       <BookCover
         isBack
-        lastPage={delayedPage === pages.length}
+        lastPage={lastPage}
         bookClosed={bookClosed}
         position-x={-PAGE_DEPTH * (pages.length - 1) - COVER_DEPTH / 2}
         position-z={COVER_DEPTH / 2}

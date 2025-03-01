@@ -145,7 +145,7 @@ export const Page = ({ page, number, opened, bookClosed, setTargetPage, ...props
 
     let targetRotation = opened ? degToRad(-87) : degToRad(90)
     if (!bookClosed) {
-      targetRotation += degToRad(number * 0.9)
+      targetRotation += degToRad((number - 1) * 0.9)
     }
 
     const emissiveIntensity = highlighted ? 0.5 : 0
@@ -222,7 +222,7 @@ export const Page = ({ page, number, opened, bookClosed, setTargetPage, ...props
     >
       <primitive
         object={manualSkinnedMesh}
-        position-z={-number * PAGE_DEPTH}
+        position-z={-(number - 1) * PAGE_DEPTH}
         ref={skinnedMesh}
       />
     </group>
