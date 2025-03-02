@@ -14,7 +14,7 @@ export const COVER_WIDTH = PAGE_WIDTH + PAGE_WIDTH * 0.05
 export const COVER_HEIGHT = PAGE_HEIGHT + PAGE_HEIGHT * 0.05
 export const COVER_DEPTH = 0.05
 
-const emissiveColor = new Color("blue")
+const emissiveColor = new Color("orange")
 
 const easingFactor = 0.3
 
@@ -68,7 +68,7 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTarg
   useFrame((_, delta) => {
     if (!mesh.current) return
 
-    const emissiveIntensity = highlighted ? 0.5 : 0
+    const emissiveIntensity = highlighted ? 0.08 : 0
     const material = mesh.current.material as MeshStandardMaterial
     material.emissiveIntensity = MathUtils.lerp(
       material.emissiveIntensity,

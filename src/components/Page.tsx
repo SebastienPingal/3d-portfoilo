@@ -13,12 +13,15 @@ const turningPageTime = 400 // if quicker, adjust easingFactor
 const insideCurveStrength = 0.16
 const outsideCurveStrength = 0.05
 const turningCurveStrength = 0.09
+const openAngle = degToRad(-87)
+const closeAngle = degToRad(89)
 
 export const PAGE_WIDTH = 1.28
 export const PAGE_HEIGHT = 1.71
 export const PAGE_DEPTH = 0.014
 export const PAGE_SEGMENTS = 30
 export const SEGMENT_WIDTH = PAGE_WIDTH / PAGE_SEGMENTS
+
 
 const pageGeometry = new BoxGeometry(
   PAGE_WIDTH,
@@ -57,7 +60,7 @@ pageGeometry.setAttribute(
 )
 
 const whiteColor = new Color("white")
-const emissiveColor = new Color("blue")
+const emissiveColor = new Color("orange")
 
 const pageMaterials = [
   new MeshStandardMaterial({ color: "white" }),
@@ -143,12 +146,12 @@ export const Page = ({ page, number, opened, bookClosed, setTargetPage, ...props
     let turningTime = Math.min(turningPageTime, +new Date() - turnedAt.current) / turningPageTime;
     turningTime = Math.sin(turningTime * Math.PI);
 
-    let targetRotation = opened ? degToRad(-87) : degToRad(90)
+    let targetRotation = opened ? openAngle : closeAngle
     if (!bookClosed) {
       targetRotation += degToRad((number - 1) * 0.9)
     }
 
-    const emissiveIntensity = highlighted ? 0.5 : 0
+    const emissiveIntensity = highlighted ? 0.08 : 0
     const materials = skinnedMesh.current.material as MeshStandardMaterial[]
     materials[4].emissiveIntensity =
       materials[5].emissiveIntensity = MathUtils.lerp(
@@ -222,7 +225,7 @@ export const Page = ({ page, number, opened, bookClosed, setTargetPage, ...props
     >
       <primitive
         object={manualSkinnedMesh}
-        position-z={-(number - 1) * PAGE_DEPTH}
+        position-z={-(number - 1) * PAGE_DEPTH - 0.01}
         ref={skinnedMesh}
       />
     </group>
