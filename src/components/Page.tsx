@@ -103,7 +103,7 @@ const pageMaterials = [
 
 const coverMaterial = new MeshStandardMaterial({
   color: '#8B4513',
-  roughness: 0.7,
+  roughness: 0.2,
   metalness: 0.1,
   emissive: emissiveColor,
   emissiveIntensity: 0
@@ -299,8 +299,8 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
       }}
       onClick={(e) => {
         e.stopPropagation()
-        if (isCover && isFront) setTargetPage(0)
-        else if (isCover) setTargetPage(numberOfPages + 2)
+        if (isCover && isFront) setTargetPage(1)
+        else if (isCover) setTargetPage(numberOfPages + 1)
         else setTargetPage(opened ? number : number + 1)
         setHighlighted(false)
       }}
