@@ -226,7 +226,7 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
 
     const bones = skinnedMesh.current.skeleton.bones
     for (let i = 0; i < bones.length; i++) {
-      const target = i === 0 ? group.current : bones[i]
+      let target = i === 0 ? group.current : bones[i]
       let rotationAngle = 0
 
 
@@ -236,6 +236,15 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
         if (i === 0) {
           rotationAngle = targetRotation
           foldRotationAngle = 0
+          if (!isFront) {
+            easing.dampAngle(
+              bones[0].rotation,
+              "y",
+              0,
+              easingFactor,
+              delta
+            )
+          }
         } else {
           rotationAngle = 0
         }
@@ -249,8 +258,17 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
           insideCurveIntensity * insideCurveStrength * targetRotation -
           outsideCurveIntensity * outsideCurveStrength * targetRotation +
           turningIntensity * turningCurveStrength * targetRotation
-        if (isCover) {
-          rotationAngle = targetRotation
+        if (isCover && i === 0) {
+          rotationAngle = isFront ? targetRotation : degToRad(10)
+          if (!isFront) {
+            easing.dampAngle(
+              bones[0].rotation,
+              "y",
+              closeAngle,
+              easingFactor,
+              delta
+            )
+          }
         }
       }
 
