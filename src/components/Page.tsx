@@ -103,8 +103,8 @@ const pageMaterials = [
 
 const coverMaterial = new MeshStandardMaterial({
   color: '#8B4513',
-  roughness: 0.2,
-  metalness: 0.1,
+  roughness: 0.8,
+  metalness: 0,
   emissive: emissiveColor,
   emissiveIntensity: 0
 })
@@ -170,7 +170,7 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
     let materials
     if (isCover) {
       // Make sure we're using an array of materials even for cover
-      materials = [coverMaterial, coverMaterial, coverMaterial, coverMaterial, coverMaterial, coverMaterial]
+      materials = Array(6).fill(coverMaterial)
     } else {
       materials = [...pageMaterials,
       new MeshStandardMaterial({
@@ -291,7 +291,7 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
     <group ref={group} {...props}
       onPointerEnter={(e) => {
         e.stopPropagation()
-        console.log("pointer enter", number)
+        console.log("🔍 pointer enter", number)
         setHighlighted(true)
       }}
       onPointerLeave={() => {
