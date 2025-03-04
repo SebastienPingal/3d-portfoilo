@@ -7,6 +7,6 @@ export type Content = {
 
 export type Page = {
     id: string
-    contentFront: Content
-    contentBack: Content
+    contentFront?: Content
+    contentBack?: Content
 }

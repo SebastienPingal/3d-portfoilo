@@ -11,7 +11,7 @@ export const Experience = ({ targetPage, pages, setTargetPage }: { targetPage: n
         <Book pages={pages} targetPage={targetPage} setTargetPage={setTargetPage} rotation-y={-Math.PI / 2} />
       </Float>
       <OrbitControls />
-      {/* <Environment preset="studio"></Environment> */}
+      <Environment preset="studio"></Environment>
       <directionalLight
         position={[2, 5, 2]}
         intensity={2.5}

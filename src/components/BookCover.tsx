@@ -76,7 +76,7 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTarg
       0.1
     )
 
-    let targetRotation = !bookClosed ? degToRad(-85) : degToRad(90)
+    let targetRotation = !bookClosed ? degToRad(-87) : degToRad(90)
     const [baseX, baseY, baseZ] = initialPosition.current
     let targetPosition: [number, number, number] = [baseX, baseY, baseZ]
 
@@ -84,10 +84,13 @@ export const BookCover = ({ isBack = false, lastPage, bookClosed, pages, setTarg
       targetRotation = degToRad(90)
     }
     if (isBack && !bookClosed) {
-      targetPosition = [baseX + COVER_DEPTH / 2 + PAGE_DEPTH * (pages.length), baseY, baseZ - COVER_DEPTH / 2 - PAGE_DEPTH * (pages.length)]
+      targetPosition = [baseX + COVER_DEPTH / 2 + PAGE_DEPTH * (pages.length), baseY, baseZ - COVER_DEPTH / 2 - PAGE_DEPTH * (pages.length) * 1.1]
     }
     if (lastPage) {
-      targetRotation = degToRad(-85)
+      targetRotation = degToRad(-87)
+      if (isBack) {
+        targetPosition = [baseX + COVER_DEPTH / 2 + PAGE_DEPTH * (pages.length), baseY, baseZ - COVER_DEPTH / 2 - PAGE_DEPTH * (pages.length) * 1.1]
+      }
     }
 
     easing.dampAngle(
