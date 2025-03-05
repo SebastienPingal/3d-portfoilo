@@ -15,11 +15,13 @@ export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: Pa
     const nextPage = targetPage > delayedPage ? delayedPage + 1 : delayedPage - 1
 
     // Special check for cover closing movements
-    const isClosingCover =
+    const isCoverMoving =
       (nextPage === 0 && delayedPage === 1) ||
-      (nextPage === pages.length + 2 && delayedPage === pages.length + 1)
+      (nextPage === pages.length + 2 && delayedPage === pages.length + 1) ||
+      (nextPage === 2 && delayedPage === 1) ||
+      (nextPage === pages.length && delayedPage === pages.length + 1)
 
-    const delay = isClosingCover ? 500 : 150
+    const delay = isCoverMoving ? 500 : 150
 
     // Schedule the state update after the appropriate delay
     const timeout = setTimeout(() => {
@@ -38,6 +40,7 @@ export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: Pa
       <Page
         key="front-cover"
         page={{} as PageType}
+        numberOfPages={pages.length}
         opened={delayedPage > 0}
         number={0}
         bookClosed={bookClosed}
@@ -49,6 +52,7 @@ export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: Pa
         <Page
           key={index}
           page={page}
+          numberOfPages={pages.length}
           opened={delayedPage > index + 1}
           number={index + 1}
           bookClosed={bookClosed}

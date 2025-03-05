@@ -8,7 +8,7 @@ export const UI = ({ className, pages, targetPage, setTargetPage }: { className?
         Première de couverture
       </Button>
       {pages.map((page, index) => (
-        <Button variant={targetPage === index + 1 ? "default" : "outline"} key={index} onClick={() => setTargetPage(index + 1)}>{page.contentFront.title}</Button>
+        <Button variant={targetPage === index + 1 ? "default" : "outline"} key={index} onClick={() => setTargetPage(index + 1)}>{page.contentFront?.title}</Button>
       ))}
       <Button variant={targetPage === pages.length + 1 ? "default" : "outline"} onClick={() => setTargetPage(pages.length + 1)}>
         Dos de dernière page

@@ -2,7 +2,7 @@ import { Page as PageType } from "@/types/pages"
 import { useCursor, useTexture } from "@react-three/drei"
 import { ThreeElements, useFrame } from "@react-three/fiber"
 import { useRef, useMemo, useState } from "react"
-import { Bone, BoxGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, Skeleton, SkinnedMesh, SRGBColorSpace, Uint16BufferAttribute, Vector3 } from "three"
+import { Bone, BoxGeometry, Color, Float32BufferAttribute, Group, MeshStandardMaterial, Skeleton, SkinnedMesh, SRGBColorSpace, Uint16BufferAttribute, Vector3 } from "three"
 import { degToRad } from "three/src/math/MathUtils.js"
 import { easing } from "maath"
 import { MathUtils } from "three"
@@ -10,14 +10,14 @@ import { MathUtils } from "three"
 const easingFactor = 0.5 // if quicker, adjust turningPageTime
 const easingFactorFold = 0.3
 const turningPageTime = 400 // if quicker, adjust easingFactor
-const insideCurveStrength = 0.156
+const insideCurveStrength = 0.16
 const outsideCurveStrength = 0.05
 const turningCurveStrength = 0.09
 
 const openAngle = degToRad(-87)
 const closeAngle = degToRad(89)
 
-export const PAGE_WIDTH = 1.28
+export const PAGE_WIDTH = 2
 export const PAGE_HEIGHT = 1.71
 export const PAGE_DEPTH = 0.014
 export const PAGE_SEGMENTS = 30
@@ -165,6 +165,12 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
         }
       }
     }
+    
+    // Create a root bone to ensure proper hierarchy
+    const rootBone = new Bone()
+    rootBone.add(bones[0])
+    bones.unshift(rootBone)
+    
     const skeleton = new Skeleton(bones)
 
     let materials
@@ -195,8 +201,13 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
     mesh.castShadow = true
     mesh.receiveShadow = true
     mesh.frustumCulled = false
-    mesh.add(skeleton.bones[0])
+    mesh.add(rootBone)  // Add the root bone to the mesh
     mesh.bind(skeleton)
+    
+    // Update the bone matrices immediately to avoid the error
+    skeleton.pose()
+    skeleton.update()
+    
     return mesh
   }, [front, back, frontRoughness, backRoughness, isCover])
 
@@ -228,7 +239,6 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
     for (let i = 0; i < bones.length; i++) {
       let target = i === 0 ? group.current : bones[i]
       let rotationAngle = 0
-
 
       let foldRotationAngle = degToRad(Math.sign(targetRotation) * 2)
 
@@ -293,6 +303,9 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
         )
       }
     }
+    
+    // Update the skeleton after modifying bones
+    skinnedMesh.current.skeleton.update()
   })
 
   const [highlighted, setHighlighted] = useState(false)
@@ -309,7 +322,6 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
     <group ref={group} {...props}
       onPointerEnter={(e) => {
         e.stopPropagation()
-        console.log("🔍 pointer enter", number)
         setHighlighted(true)
       }}
       onPointerLeave={() => {
