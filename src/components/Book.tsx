@@ -7,7 +7,7 @@ import { Vector3, Mesh, Group } from "three"
 import { degToRad } from "three/src/math/MathUtils.js"
 import { easing } from "maath"
 
-export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: PageType[], targetPage: number, setTargetPage: (page: number) => void } & ThreeElements['group']) => {
+export const Book = ({ pages, targetPage, setTargetPage, pageWidth = 1.5, pageHeight = 2, ...props }: { pages: PageType[], targetPage: number, setTargetPage: (page: number) => void, pageWidth: number, pageHeight: number } & ThreeElements['group']) => {
   const [delayedPage, setDelayedPage] = useState(targetPage)
   const backCoverRef = useRef<Mesh>(null)
   const [backCoverPosition, setBackCoverPosition] = useState(new Vector3())
@@ -72,6 +72,8 @@ export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: Pa
       <Page
         key="front-cover"
         page={{} as PageType}
+        pageWidth={pageWidth}
+        pageHeight={pageHeight}
         numberOfPages={pages.length}
         opened={delayedPage > 0}
         number={0}
@@ -84,6 +86,8 @@ export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: Pa
         <Page
           key={index}
           page={page}
+          pageWidth={pageWidth}
+          pageHeight={pageHeight}
           numberOfPages={pages.length}
           opened={delayedPage > index + 1}
           number={index + 1}
@@ -95,6 +99,8 @@ export const Book = ({ pages, targetPage, setTargetPage, ...props }: { pages: Pa
         pageRef={backCoverRef}
         key="back-cover"
         page={{} as PageType}
+        pageWidth={pageWidth}
+        pageHeight={pageHeight}
         numberOfPages={pages.length}
         opened={delayedPage > pages.length + 1}
         number={pages.length + 1}

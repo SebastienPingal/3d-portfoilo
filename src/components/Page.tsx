@@ -17,79 +17,74 @@ const turningCurveStrength = 0.09
 const openAngle = degToRad(-87)
 const closeAngle = degToRad(89)
 
-export const PAGE_WIDTH = 2
-export const PAGE_HEIGHT = 1.71
+// Replace global constants with variables based on props
 export const PAGE_DEPTH = 0.014
 export const PAGE_SEGMENTS = 30
-export const SEGMENT_WIDTH = PAGE_WIDTH / PAGE_SEGMENTS
 
-export const COVER_WIDTH = PAGE_WIDTH + PAGE_WIDTH * 0.05
-export const COVER_HEIGHT = PAGE_HEIGHT + PAGE_HEIGHT * 0.05
-export const COVER_DEPTH = 0.05
+// Create a function to generate geometries based on dimensions
+const createGeometries = (pageWidth: number, pageHeight: number) => {
+  const SEGMENT_WIDTH = pageWidth / PAGE_SEGMENTS
 
-const pageGeometry = new BoxGeometry(
-  PAGE_WIDTH,
-  PAGE_HEIGHT,
-  PAGE_DEPTH,
-  PAGE_SEGMENTS,
-  2
-)
+  const COVER_WIDTH = pageWidth + pageWidth * 0.05
+  const COVER_HEIGHT = pageHeight + pageHeight * 0.05
+  const COVER_DEPTH = 0.05
 
-pageGeometry.translate(PAGE_WIDTH / 2, 0, 0)
+  // Create page geometry
+  const pageGeometry = new BoxGeometry(
+    pageWidth,
+    pageHeight,
+    PAGE_DEPTH,
+    PAGE_SEGMENTS,
+    2
+  )
 
-const position = pageGeometry.attributes.position
-const vertex = new Vector3()
-const skinIndexes = []
-const skinWeights = []
+  pageGeometry.translate(pageWidth / 2, 0, 0)
 
-for (let i = 0; i < position.count; i++) {
-  vertex.fromBufferAttribute(position, i)
-  const x = vertex.x
+  const position = pageGeometry.attributes.position
+  const vertex = new Vector3()
+  const skinIndexes = []
+  const skinWeights = []
 
-  const skinIndex = Math.max(0, Math.floor(x / SEGMENT_WIDTH))
-  const skinWeight = (x % SEGMENT_WIDTH) / SEGMENT_WIDTH
+  for (let i = 0; i < position.count; i++) {
+    vertex.fromBufferAttribute(position, i)
+    const x = vertex.x
 
-  skinIndexes.push(skinIndex, skinIndex + 1, 0, 0)
-  skinWeights.push(1 - skinWeight, skinWeight, 0, 0)
+    const skinIndex = Math.max(0, Math.floor(x / SEGMENT_WIDTH))
+    const skinWeight = (x % SEGMENT_WIDTH) / SEGMENT_WIDTH
+
+    skinIndexes.push(skinIndex, skinIndex + 1, 0, 0)
+    skinWeights.push(1 - skinWeight, skinWeight, 0, 0)
+  }
+
+  pageGeometry.setAttribute(
+    'skinIndex',
+    new Uint16BufferAttribute(skinIndexes, 4)
+  )
+
+  pageGeometry.setAttribute(
+    'skinWeight',
+    new Float32BufferAttribute(skinWeights, 4)
+  )
+
+  // Create cover geometry
+  const coverGeometry = new BoxGeometry(
+    COVER_WIDTH,
+    COVER_HEIGHT,
+    COVER_DEPTH,
+    1,
+    2
+  )
+  coverGeometry.translate(COVER_WIDTH / 2, 0, 0)
+
+  return {
+    pageGeometry,
+    coverGeometry,
+    SEGMENT_WIDTH,
+    COVER_WIDTH,
+    COVER_HEIGHT,
+    COVER_DEPTH
+  }
 }
-
-pageGeometry.setAttribute(
-  'skinIndex',
-  new Uint16BufferAttribute(skinIndexes, 4)
-)
-
-pageGeometry.setAttribute(
-  'skinWeight',
-  new Float32BufferAttribute(skinWeights, 4)
-)
-
-const coverGeometry = new BoxGeometry(
-  COVER_WIDTH,
-  COVER_HEIGHT,
-  COVER_DEPTH,
-  1,
-  2
-)
-coverGeometry.translate(COVER_WIDTH / 2, 0, 0)
-
-// Add skinning attributes to cover geometry
-// const coverSkinIndexes = []
-// const coverSkinWeights = []
-
-// for (let i = 0; i < coverGeometry.attributes.position.count; i++) {
-//   coverSkinIndexes.push(0, 0, 0, 0)
-//   coverSkinWeights.push(1, 0, 0, 0)
-// }
-
-// coverGeometry.setAttribute(
-//   'skinIndex',
-//   new Uint16BufferAttribute(coverSkinIndexes, 4)
-// )
-
-// coverGeometry.setAttribute(
-//   'skinWeight',
-//   new Float32BufferAttribute(coverSkinWeights, 4)
-// )
 
 const whiteColor = new Color("white")
 const emissiveColor = new Color("orange")
@@ -109,7 +104,7 @@ const coverMaterial = new MeshStandardMaterial({
   emissiveIntensity: 0
 })
 
-export const Page = ({ pageRef, page, number, opened, bookClosed, numberOfPages, setTargetPage, isCover = false, isFront = true, ...props }: {
+export const Page = ({ pageRef, page, number, opened, bookClosed, numberOfPages, setTargetPage, isCover = false, isFront = true, pageWidth = 2, pageHeight = 1.5, ...props }: {
   pageRef?: React.RefObject<Mesh | null>,
   page: PageType,
   number: number,
@@ -118,7 +113,9 @@ export const Page = ({ pageRef, page, number, opened, bookClosed, numberOfPages,
   numberOfPages: number,
   setTargetPage: (page: number) => void,
   isCover?: boolean,
-  isFront?: boolean
+  isFront?: boolean,
+  pageWidth?: number,
+  pageHeight?: number
 } & ThreeElements['group']) => {
 
   const texturePaths = [
@@ -153,6 +150,11 @@ export const Page = ({ pageRef, page, number, opened, bookClosed, numberOfPages,
       pageRef.current = node
     }
   }, [pageRef])
+
+  // Create geometries based on props
+  const { pageGeometry, coverGeometry, SEGMENT_WIDTH, COVER_DEPTH } = useMemo(() =>
+    createGeometries(pageWidth, pageHeight)
+    , [pageWidth, pageHeight])
 
   const manualSkinnedMesh = useMemo(() => {
     const bones = []
@@ -236,7 +238,7 @@ export const Page = ({ pageRef, page, number, opened, bookClosed, numberOfPages,
     }
 
     return mesh
-  }, [front, back, frontRoughness, backRoughness, isCover])
+  }, [front, back, frontRoughness, backRoughness, isCover, SEGMENT_WIDTH, pageGeometry, coverGeometry])
 
   useFrame((_, delta) => {
     if (!skinnedMesh.current) return
