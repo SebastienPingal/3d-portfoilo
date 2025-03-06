@@ -11,19 +11,26 @@ export const Book = ({ pages, targetPage, setTargetPage, pageWidth = 1.5, pageHe
   const [delayedPage, setDelayedPage] = useState(targetPage)
   const backCoverRef = useRef<Mesh>(null)
   const frontCoverRef = useRef<Mesh>(null)
-  const [backCoverPosition, setBackCoverPosition] = useState(new Vector3())
   const group = useRef<Group>(null)
-
-  const openAngle = degToRad(-87)
-  const closeAngle = degToRad(89)
+  const openAngle = degToRad(180)
+  const closeAngle = degToRad(0)
+  const middleAngle = degToRad(-90)
+  const startAngle = degToRad(0)
   const easingFactor = 0.5
+
+  // Initialize the book rotation
+  useEffect(() => {
+    if (group.current) {
+      group.current.rotation.y = startAngle
+    }
+  }, [])
 
   // Create spine geometry and material
   const spineProps = useMemo(() => {
     const COVER_DEPTH = 0.05
     const COVER_HEIGHT = pageHeight + pageHeight * 0.05
     const spineWidth = (pages.length * PAGE_DEPTH) + (COVER_DEPTH * 2)
-    
+
     const spineGeometry = new BoxGeometry(spineWidth, COVER_HEIGHT, COVER_DEPTH)
     spineGeometry.translate(spineWidth / 2 - COVER_DEPTH / 2, 0, 0)
     const spineMaterial = new MeshStandardMaterial({
@@ -31,7 +38,7 @@ export const Book = ({ pages, targetPage, setTargetPage, pageWidth = 1.5, pageHe
       roughness: 0.8,
       metalness: 0
     })
-    
+
     return { spineGeometry, spineMaterial, spineWidth }
   }, [pageHeight, pages.length])
 
@@ -65,10 +72,16 @@ export const Book = ({ pages, targetPage, setTargetPage, pageWidth = 1.5, pageHe
 
   useFrame((_, delta) => {
     const lastPage = delayedPage === pages.length + 2
-    let targetRotation = bookClosed ? closeAngle : 0
+    let targetRotation = bookClosed ? closeAngle : middleAngle
     if (lastPage) {
       targetRotation = openAngle
     }
+    
+    // When book hasn't been interacted with yet, keep it at the start angle
+    if (targetPage === 0 && delayedPage === 0) {
+      targetRotation = startAngle
+    }
+    
     if (group.current) {
       easing.dampAngle(
         group.current.rotation,
@@ -77,10 +90,6 @@ export const Book = ({ pages, targetPage, setTargetPage, pageWidth = 1.5, pageHe
         easingFactor,
         delta
       )
-    }
-    // update the back cover position with pageRef
-    if (backCoverRef.current) {
-      setBackCoverPosition(backCoverRef.current.position)
     }
   })
 
@@ -128,24 +137,14 @@ export const Book = ({ pages, targetPage, setTargetPage, pageWidth = 1.5, pageHe
         isCover={true}
         isFront={false}
       />
-      
+
       {/* Book spine */}
-      <mesh 
-        position={[0, 0, 0]} 
+      <mesh
+        position={[0, 0, 0]}
         rotation={[0, degToRad(90), 0]}
       >
         <primitive object={spineProps.spineGeometry} />
         <primitive object={spineProps.spineMaterial} />
-      </mesh>
-      
-      {/* Debug cubes - you can remove these when done */}
-      <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[0.1, 0.1, 0.1]} />
-        <meshStandardMaterial color={0x00ff00} />
-      </mesh>
-      <mesh position={backCoverPosition}>
-        <boxGeometry args={[0.1, 0.1, 0.1]} />
-        <meshStandardMaterial color={0x0000ff} />
       </mesh>
     </group>
   )
