@@ -49,8 +49,11 @@ const createGeometries = (pageWidth: number, pageHeight: number) => {
     vertex.fromBufferAttribute(position, i)
     const x = vertex.x
 
-    const skinIndex = Math.max(0, Math.floor(x / SEGMENT_WIDTH))
-    const skinWeight = (x % SEGMENT_WIDTH) / SEGMENT_WIDTH
+    // Calculate in normalized space
+    const normalizedX = x / pageWidth
+    const normalizedSegment = normalizedX * PAGE_SEGMENTS
+    const skinIndex = Math.floor(normalizedSegment)
+    const skinWeight = normalizedSegment - skinIndex
 
     skinIndexes.push(skinIndex, skinIndex + 1, 0, 0)
     skinWeights.push(1 - skinWeight, skinWeight, 0, 0)
@@ -154,7 +157,7 @@ export const Page = ({ pageRef, page, number, opened, bookClosed, numberOfPages,
   // Create geometries based on props
   const { pageGeometry, coverGeometry, SEGMENT_WIDTH, COVER_DEPTH } = useMemo(() =>
     createGeometries(pageWidth, pageHeight)
-    , [pageWidth, pageHeight])
+    , [])
 
   const manualSkinnedMesh = useMemo(() => {
     const bones = []
@@ -238,7 +241,7 @@ export const Page = ({ pageRef, page, number, opened, bookClosed, numberOfPages,
     }
 
     return mesh
-  }, [front, back, frontRoughness, backRoughness, isCover, SEGMENT_WIDTH, pageGeometry, coverGeometry])
+  }, [])
 
   useFrame((_, delta) => {
     if (!skinnedMesh.current) return
