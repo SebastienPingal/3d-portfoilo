@@ -1,21 +1,39 @@
 'use client'
 import { Page as PageType } from "@/types/pages"
 import { useFrame, ThreeElements } from "@react-three/fiber"
-import { Page } from "./Page"
-import { useEffect, useRef, useState } from "react"
-import { Vector3, Mesh, Group } from "three"
+import { Page, PAGE_DEPTH } from "./Page"
+import { useEffect, useRef, useState, useMemo } from "react"
+import { Vector3, Mesh, Group, BoxGeometry, MeshStandardMaterial } from "three"
 import { degToRad } from "three/src/math/MathUtils.js"
 import { easing } from "maath"
 
 export const Book = ({ pages, targetPage, setTargetPage, pageWidth = 1.5, pageHeight = 2, ...props }: { pages: PageType[], targetPage: number, setTargetPage: (page: number) => void, pageWidth: number, pageHeight: number } & ThreeElements['group']) => {
   const [delayedPage, setDelayedPage] = useState(targetPage)
   const backCoverRef = useRef<Mesh>(null)
+  const frontCoverRef = useRef<Mesh>(null)
   const [backCoverPosition, setBackCoverPosition] = useState(new Vector3())
   const group = useRef<Group>(null)
 
   const openAngle = degToRad(-87)
   const closeAngle = degToRad(89)
   const easingFactor = 0.5
+
+  // Create spine geometry and material
+  const spineProps = useMemo(() => {
+    const COVER_DEPTH = 0.05
+    const COVER_HEIGHT = pageHeight + pageHeight * 0.05
+    const spineWidth = (pages.length * PAGE_DEPTH) + (COVER_DEPTH * 2)
+    
+    const spineGeometry = new BoxGeometry(spineWidth, COVER_HEIGHT, COVER_DEPTH)
+    spineGeometry.translate(spineWidth / 2 - COVER_DEPTH / 2, 0, 0)
+    const spineMaterial = new MeshStandardMaterial({
+      color: '#8B4513',
+      roughness: 0.8,
+      metalness: 0
+    })
+    
+    return { spineGeometry, spineMaterial, spineWidth }
+  }, [pageHeight, pages.length])
 
   useEffect(() => {
     // If we're already at the target, nothing to do
@@ -70,6 +88,7 @@ export const Book = ({ pages, targetPage, setTargetPage, pageWidth = 1.5, pageHe
   return (
     <group {...props} ref={group}>
       <Page
+        pageRef={frontCoverRef}
         key="front-cover"
         page={{} as PageType}
         pageWidth={pageWidth}
@@ -109,12 +128,21 @@ export const Book = ({ pages, targetPage, setTargetPage, pageWidth = 1.5, pageHe
         isCover={true}
         isFront={false}
       />
-      {/* green cube at origin (0,0,0) */}
+      
+      {/* Book spine */}
+      <mesh 
+        position={[0, 0, 0]} 
+        rotation={[0, degToRad(90), 0]}
+      >
+        <primitive object={spineProps.spineGeometry} />
+        <primitive object={spineProps.spineMaterial} />
+      </mesh>
+      
+      {/* Debug cubes - you can remove these when done */}
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[0.1, 0.1, 0.1]} />
         <meshStandardMaterial color={0x00ff00} />
       </mesh>
-      {/* blue cube at back cover position */}
       <mesh position={backCoverPosition}>
         <boxGeometry args={[0.1, 0.1, 0.1]} />
         <meshStandardMaterial color={0x0000ff} />
