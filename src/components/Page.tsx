@@ -1,8 +1,8 @@
 import { Page as PageType } from "@/types/pages"
 import { useCursor, useTexture } from "@react-three/drei"
 import { ThreeElements, useFrame } from "@react-three/fiber"
-import { useRef, useMemo, useState } from "react"
-import { Bone, BoxGeometry, Color, Float32BufferAttribute, Group, MeshStandardMaterial, Skeleton, SkinnedMesh, SRGBColorSpace, Uint16BufferAttribute, Vector3 } from "three"
+import { useRef, useMemo, useState, useCallback } from "react"
+import { Bone, BoxGeometry, Color, Float32BufferAttribute, Group, Mesh, MeshStandardMaterial, Skeleton, SkinnedMesh, SRGBColorSpace, Uint16BufferAttribute, Vector3 } from "three"
 import { degToRad } from "three/src/math/MathUtils.js"
 import { easing } from "maath"
 import { MathUtils } from "three"
@@ -73,23 +73,23 @@ const coverGeometry = new BoxGeometry(
 coverGeometry.translate(COVER_WIDTH / 2, 0, 0)
 
 // Add skinning attributes to cover geometry
-const coverSkinIndexes = []
-const coverSkinWeights = []
+// const coverSkinIndexes = []
+// const coverSkinWeights = []
 
-for (let i = 0; i < coverGeometry.attributes.position.count; i++) {
-  coverSkinIndexes.push(0, 0, 0, 0)
-  coverSkinWeights.push(1, 0, 0, 0)
-}
+// for (let i = 0; i < coverGeometry.attributes.position.count; i++) {
+//   coverSkinIndexes.push(0, 0, 0, 0)
+//   coverSkinWeights.push(1, 0, 0, 0)
+// }
 
-coverGeometry.setAttribute(
-  'skinIndex',
-  new Uint16BufferAttribute(coverSkinIndexes, 4)
-)
+// coverGeometry.setAttribute(
+//   'skinIndex',
+//   new Uint16BufferAttribute(coverSkinIndexes, 4)
+// )
 
-coverGeometry.setAttribute(
-  'skinWeight',
-  new Float32BufferAttribute(coverSkinWeights, 4)
-)
+// coverGeometry.setAttribute(
+//   'skinWeight',
+//   new Float32BufferAttribute(coverSkinWeights, 4)
+// )
 
 const whiteColor = new Color("white")
 const emissiveColor = new Color("orange")
@@ -109,7 +109,8 @@ const coverMaterial = new MeshStandardMaterial({
   emissiveIntensity: 0
 })
 
-export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTargetPage, isCover = false, isFront = true, ...props }: {
+export const Page = ({ pageRef, page, number, opened, bookClosed, numberOfPages, setTargetPage, isCover = false, isFront = true, ...props }: {
+  pageRef?: React.RefObject<Mesh | null>,
   page: PageType,
   number: number,
   opened: boolean,
@@ -140,16 +141,27 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
   const group = useRef<Group>(null)
   const turnedAt = useRef<number>(0)
   const lastOpened = useRef<boolean>(opened)
-  const skinnedMesh = useRef<SkinnedMesh>(null)
+  const skinnedMesh = useRef<SkinnedMesh | Mesh>(null)
+
+  // Create a callback ref that updates both refs
+  const setRefs = useCallback((node: Mesh | null) => {
+    // Set the internal ref
+    skinnedMesh.current = node
+
+    // Set the external ref if provided
+    if (pageRef && node) {
+      pageRef.current = node
+    }
+  }, [pageRef])
 
   const manualSkinnedMesh = useMemo(() => {
     const bones = []
 
     if (isCover) {
-      // Create just one bone for the cover
-      const bone = new Bone()
-      bone.position.x = 0
-      bones.push(bone)
+      // // Create just one bone for the cover
+      // const bone = new Bone()
+      // bone.position.x = 0
+      // bones.push(bone)
     } else {
       // Create multiple bones for regular pages
       for (let i = 0; i <= PAGE_SEGMENTS; i++) {
@@ -165,13 +177,16 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
         }
       }
     }
-    
-    // Create a root bone to ensure proper hierarchy
-    const rootBone = new Bone()
-    rootBone.add(bones[0])
-    bones.unshift(rootBone)
-    
-    const skeleton = new Skeleton(bones)
+
+    let skeleton
+    let rootBone
+    if (!isCover) {
+      // Create a root bone to ensure proper hierarchy
+      rootBone = new Bone()
+      rootBone.add(bones[0])
+      bones.unshift(rootBone)
+      skeleton = new Skeleton(bones)
+    }
 
     let materials
     if (isCover) {
@@ -197,17 +212,29 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
       }),
       ]
     }
-    const mesh = new SkinnedMesh(isCover ? coverGeometry : pageGeometry, materials)
+    let mesh
+    if (!isCover) {
+      mesh = new SkinnedMesh(pageGeometry, materials)
+    } else {
+      mesh = new Mesh(coverGeometry, materials)
+    }
+
     mesh.castShadow = true
     mesh.receiveShadow = true
     mesh.frustumCulled = false
-    mesh.add(rootBone)  // Add the root bone to the mesh
-    mesh.bind(skeleton)
-    
+    if (!isCover && rootBone) {
+      mesh.add(rootBone)  // Add the root bone to the mesh
+    }
+    if (!isCover && skeleton && mesh instanceof SkinnedMesh) {
+      mesh.bind(skeleton)
+    }
+
     // Update the bone matrices immediately to avoid the error
-    skeleton.pose()
-    skeleton.update()
-    
+    if (!isCover && skeleton) {
+      skeleton.pose()
+      skeleton.update()
+    }
+
     return mesh
   }, [front, back, frontRoughness, backRoughness, isCover])
 
@@ -235,77 +262,78 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
         )
     }
 
-    const bones = skinnedMesh.current.skeleton.bones
-    for (let i = 0; i < bones.length; i++) {
-      let target = i === 0 ? group.current : bones[i]
-      let rotationAngle = 0
-
-      let foldRotationAngle = degToRad(Math.sign(targetRotation) * 2)
-
+    if (isCover && group.current) {
+      let rotationAngle = targetRotation
       if (bookClosed) {
-        if (i === 0) {
-          rotationAngle = targetRotation
-          foldRotationAngle = 0
-          if (!isFront) {
-            easing.dampAngle(
-              bones[0].rotation,
-              "y",
-              0,
-              easingFactor,
-              delta
-            )
+        rotationAngle = 0
+      }
+      easing.dampAngle(
+        skinnedMesh.current.rotation,
+        "y",
+        rotationAngle,
+        easingFactor,
+        delta
+      )
+
+      // easing.dampAngle(
+      //   group.current.rotation,
+      //   "y",
+      //   rotationAngle,
+      //   easingFactor,
+      //   delta
+      // )
+    }
+
+    if (!isCover && skinnedMesh.current instanceof SkinnedMesh) {
+      const bones = skinnedMesh.current.skeleton.bones
+      for (let i = 1; i < bones.length; i++) {
+        const target = bones[i]
+        let rotationAngle = 0
+
+        let foldRotationAngle = degToRad(Math.sign(targetRotation) * 2)
+
+        if (bookClosed) {
+          if (i === 0) {
+            rotationAngle = targetRotation
+            foldRotationAngle = 0
+          } else {
+            rotationAngle = 0
           }
         } else {
-          rotationAngle = 0
+
+          const insideCurveIntensity = i < 8 ? Math.sin(i * 0.2 + 0.25) : 0
+          const outsideCurveIntensity = i >= 8 ? Math.cos(i * 0.3 - 0.9) : 0
+          const turningIntensity = Math.sin(i * Math.PI * (1 / bones.length)) * turningTime
+
+          rotationAngle =
+            insideCurveIntensity * insideCurveStrength * targetRotation -
+            outsideCurveIntensity * outsideCurveStrength * targetRotation +
+            turningIntensity * turningCurveStrength * targetRotation
         }
-      } else {
 
-        const insideCurveIntensity = i < 8 ? Math.sin(i * 0.2 + 0.25) : 0
-        const outsideCurveIntensity = i >= 8 ? Math.cos(i * 0.3 - 0.9) : 0
-        const turningIntensity = Math.sin(i * Math.PI * (1 / bones.length)) * turningTime
+        const foldIntensity = i > 8
+          ? Math.sin(i * Math.PI * (1 / bones.length) - 0.5) * turningTime
+          : 0
 
-        rotationAngle =
-          insideCurveIntensity * insideCurveStrength * targetRotation -
-          outsideCurveIntensity * outsideCurveStrength * targetRotation +
-          turningIntensity * turningCurveStrength * targetRotation
-        if (isCover && i === 0) {
-          rotationAngle = isFront ? targetRotation : degToRad(10)
-          if (!isFront) {
-            easing.dampAngle(
-              bones[0].rotation,
-              "y",
-              closeAngle,
-              easingFactor,
-              delta
-            )
-          }
+        if (target) {
+          easing.dampAngle(
+            target.rotation,
+            "y",
+            rotationAngle,
+            easingFactor,
+            delta
+          )
+          easing.dampAngle(
+            target.rotation,
+            "x",
+            foldRotationAngle * foldIntensity,
+            easingFactorFold,
+            delta
+          )
         }
       }
-
-      const foldIntensity = i > 8
-        ? Math.sin(i * Math.PI * (1 / bones.length) - 0.5) * turningTime
-        : 0
-
-      if (target) {
-        easing.dampAngle(
-          target.rotation,
-          "y",
-          rotationAngle,
-          easingFactor,
-          delta
-        )
-        easing.dampAngle(
-          target.rotation,
-          "x",
-          foldRotationAngle * foldIntensity,
-          easingFactorFold,
-          delta
-        )
-      }
+      skinnedMesh.current.skeleton.update()
     }
-    
-    // Update the skeleton after modifying bones
-    skinnedMesh.current.skeleton.update()
   })
 
   const [highlighted, setHighlighted] = useState(false)
@@ -338,7 +366,7 @@ export const Page = ({ page, number, opened, bookClosed, numberOfPages, setTarge
       <primitive
         object={manualSkinnedMesh}
         position-z={positionZ}
-        ref={skinnedMesh}
+        ref={setRefs}
       />
     </group>
   )
